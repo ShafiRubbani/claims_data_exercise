@@ -1,6 +1,7 @@
 library(readr)
 library(readxl)
 library(janitor)
+library(lubridate)
 library(tidyverse)
 
 claims <- read_csv("claims_ex1.csv",
@@ -23,7 +24,8 @@ claims <- read_csv("claims_ex1.csv",
                      claim_date = col_double(),
                      id = col_double(),
                      cap = col_double()
-                   ))
+                   )) %>%
+  mutate(claim_date = format(as.Date(claim_date, origin="1960-01-01"),"%Y-%m-%d"))
 
 enrollment <- read_csv("enrollment_ex1.csv",
                        col_types = cols(
@@ -52,3 +54,27 @@ income_by_zip <- read_csv("income_by_zip_ex1.csv",
                             med_income = col_double(),
                             zip_code = col_double()
                           ))
+
+cohort <- enrollment %>% 
+  mutate(diab_program_months =
+           diab_program_ind1 +
+           diab_program_ind2 +
+           diab_program_ind3 +
+           diab_program_ind4 +
+           diab_program_ind5 +
+           diab_program_ind6 +
+           diab_program_ind7 +
+           diab_program_ind8 +
+           diab_program_ind9 +
+           diab_program_ind10 +
+           diab_program_ind11 +
+           diab_program_ind12) %>% 
+  filter(diab_program_months > 0)
+
+diabetes_claim_ids <- claims %>% 
+  filter(visit_type == "OFF") %>% 
+  filter(str_detect(principal_diagnosis_cleaned, "250")) %>% 
+  select(claim_id) %>% 
+  unlist()
+
+# lower_SES <-
