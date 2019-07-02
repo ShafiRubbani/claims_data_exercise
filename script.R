@@ -1,8 +1,13 @@
+# Install relevant libraries
+
 library(readr)
 library(readxl)
 library(janitor)
 library(lubridate)
 library(tidyverse)
+
+# Read claims data from csv file, renaming some columns as appropriate and
+# reformatting dates from STATA format
 
 claims <- read_csv("claims_ex1.csv",
                    skip = 1,
@@ -26,6 +31,8 @@ claims <- read_csv("claims_ex1.csv",
                      cap = col_double()
                    )) %>%
   mutate(claim_date = format(as.Date(claim_date, origin="1960-01-01"),"%Y-%m-%d"))
+
+# Read enrollment data from csv file and rename enrollment columns by month number
 
 enrollment <- read_csv("enrollment_ex1.csv",
                        skip = 1,
@@ -68,47 +75,7 @@ enrollment <- read_csv("enrollment_ex1.csv",
                          zip = col_double()
                        ))
 
-enrollment <- read_csv("enrollment_ex1.csv",
-                       skip = 1,
-                       col_names = c(
-                         "id",
-                         "age",
-                         "female",
-                         "cap",
-                         `01`,
-                         `02`,
-                         `03`,
-                         `04`,
-                         `05`,
-                         `06`,
-                         `07`,
-                         `08`,
-                         `09`,
-                         `10`,
-                         `11`,
-                         `12`,
-                         "race",
-                         "zip"),
-                       col_types = cols(
-                         id = col_double(),
-                         age = col_double(),
-                         female = col_double(),
-                         cap = col_double(),
-                         `01` = col_double(),
-                         `02` = col_double(),
-                         `03` = col_double(),
-                         `04` = col_double(),
-                         `05` = col_double(),
-                         `06` = col_double(),
-                         `07` = col_double(),
-                         `08` = col_double(),
-                         `09` = col_double(),
-                         `10` = col_double(),
-                         `11` = col_double(),
-                         `12` = col_double(),
-                         race = col_character(),
-                         zip = col_double()
-                       ))
+# Read income data from csv file
 
 income_by_zip <- read_csv("income_by_zip_ex1.csv",
                           col_types = cols(
@@ -116,12 +83,7 @@ income_by_zip <- read_csv("income_by_zip_ex1.csv",
                             zip_code = col_double()
                           ))
 
-diabetes_claim_ids <- claims %>% 
-  filter(visit_type == "OFF") %>% 
-  filter(str_detect(principal_diagnosis_cleaned, "250")) %>% 
-  
-  select(claim_id) %>% 
-  unlist()
+# Reformat enrollment data to identify months enrolled
 
 enrollment_modified <- enrollment %>% 
   gather(key = "month", value = "enrolled",
@@ -140,6 +102,17 @@ enrollment_modified <- enrollment %>%
   filter(enrolled != 0) %>% 
   select(-enrolled) %>% 
   mutate(month = month(month))
+
+# Identify relevant claim ID's based on criteria
+
+diabetes_claim_ids <- claims %>% 
+  filter(visit_type == "OFF") %>% 
+  filter(str_detect(principal_diagnosis_cleaned, "250")) %>% 
+  
+  select(claim_id) %>% 
+  unlist()
+
+# Calculate median income across zip codes
 
 lower_SES <- income_by_zip %>% 
   summarize(median(med_income)) %>% 
