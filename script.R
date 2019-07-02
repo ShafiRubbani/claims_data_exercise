@@ -114,6 +114,12 @@ diabetes_claim_ids <- claims %>%
   distinct() %>% 
   unlist()
 
+# Calculate median income across zip codes
+
+median_income <- income_by_zip %>% 
+  summarize(median(med_income)) %>% 
+  unlist()
+
 # Calculate the individual total annual cost of claims meeting above criteria
 
 individual_annual <- claims %>% 
@@ -123,7 +129,9 @@ individual_annual <- claims %>%
   summarize(total = sum(allowed_amount_cleaned)) %>% 
   ungroup()
 
-regression_model <- individual_annual %>% 
+# Gather relevant variables for regression models
+
+regression_variables <- individual_annual %>% 
   left_join(enrollment, by = c("id")) %>% 
   mutate(months_enrolled = 
            `01` +
@@ -138,11 +146,10 @@ regression_model <- individual_annual %>%
            `10` +
            `11` +
            `12`) %>% 
-  select(id, total, age, female, zip, months_enrolled) %>% 
-  left_join(income_by_zip, by = c("zip" = "zip_code"))
+  select(id, total, age, female, race, zip, months_enrolled) %>% 
+  left_join(income_by_zip, by = c("zip" = "zip_code")) %>% 
+  mutate(lower_SES = if_else(med_income < median_income, 1, 0)) %>% 
+  mutate(race = if_else(race == "w", 0, 1)) %>% 
+  select(id, total, lower_SES, age, female, race, months_enrolled)
 
-# Calculate median income across zip codes
-
-median_income <- income_by_zip %>% 
-  summarize(median(med_income)) %>% 
-  unlist()
+SES_vs_annual_costs <- lm(total ~ lower_SES + age + female + months_enrolled)
