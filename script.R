@@ -109,12 +109,40 @@ diabetes_claim_ids <- claims %>%
   filter(visit_type == "OFF") %>% 
   filter(str_detect(principal_diagnosis_cleaned, "250")) %>% 
   mutate(claim_month = as.numeric(month(claim_date))) %>% 
-  semi_join(enrollment_modified, by = c("id" = "id", "claim_month" = "month"))
+  semi_join(enrollment_modified, by = c("id" = "id", "claim_month" = "month")) %>% 
   select(claim_id) %>% 
+  distinct() %>% 
   unlist()
+
+# Calculate the individual total annual cost of claims meeting above criteria
+
+individual_annual <- claims %>% 
+  filter(claim_id %in% diabetes_claim_ids) %>% 
+  # distinct() %>% 
+  group_by(id) %>% 
+  summarize(total = sum(allowed_amount_cleaned)) %>% 
+  ungroup()
+
+regression_model <- individual_annual %>% 
+  left_join(enrollment, by = c("id")) %>% 
+  mutate(months_enrolled = 
+           `01` +
+           `02` +
+           `03` +
+           `04` +
+           `05` +
+           `06` +
+           `07` +
+           `08` +
+           `09` +
+           `10` +
+           `11` +
+           `12`) %>% 
+  select(id, total, age, female, zip, months_enrolled) %>% 
+  left_join(income_by_zip, by = c("zip" = "zip_code"))
 
 # Calculate median income across zip codes
 
-lower_SES <- income_by_zip %>% 
+median_income <- income_by_zip %>% 
   summarize(median(med_income)) %>% 
   unlist()
