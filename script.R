@@ -101,14 +101,15 @@ enrollment_modified <- enrollment %>%
          `12`) %>% 
   filter(enrolled != 0) %>% 
   select(-enrolled) %>% 
-  mutate(month = month(month))
+  mutate(month = as.numeric(month))
 
 # Identify relevant claim ID's based on criteria
 
 diabetes_claim_ids <- claims %>% 
   filter(visit_type == "OFF") %>% 
   filter(str_detect(principal_diagnosis_cleaned, "250")) %>% 
-  
+  mutate(claim_month = as.numeric(month(claim_date))) %>% 
+  semi_join(enrollment_modified, by = c("id" = "id", "claim_month" = "month"))
   select(claim_id) %>% 
   unlist()
 
