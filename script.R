@@ -28,23 +28,84 @@ claims <- read_csv("claims_ex1.csv",
   mutate(claim_date = format(as.Date(claim_date, origin="1960-01-01"),"%Y-%m-%d"))
 
 enrollment <- read_csv("enrollment_ex1.csv",
+                       skip = 1,
+                       col_names = c("id",
+                         "age",
+                         "female",
+                         "cap",
+                         "01",
+                         "02",
+                         "03",
+                         "04",
+                         "05",
+                         "06",
+                         "07",
+                         "08",
+                         "09",
+                         "10",
+                         "11",
+                         "12",
+                         "race",
+                         "zip"),
                        col_types = cols(
                          id = col_double(),
                          age = col_double(),
                          female = col_double(),
                          cap = col_double(),
-                         diab_program_ind1 = col_double(),
-                         diab_program_ind2 = col_double(),
-                         diab_program_ind3 = col_double(),
-                         diab_program_ind4 = col_double(),
-                         diab_program_ind5 = col_double(),
-                         diab_program_ind6 = col_double(),
-                         diab_program_ind7 = col_double(),
-                         diab_program_ind8 = col_double(),
-                         diab_program_ind9 = col_double(),
-                         diab_program_ind10 = col_double(),
-                         diab_program_ind11 = col_double(),
-                         diab_program_ind12 = col_double(),
+                         `01` = col_double(),
+                         `02` = col_double(),
+                         `03` = col_double(),
+                         `04` = col_double(),
+                         `05` = col_double(),
+                         `06` = col_double(),
+                         `07` = col_double(),
+                         `08` = col_double(),
+                         `09` = col_double(),
+                         `10` = col_double(),
+                         `11` = col_double(),
+                         `12` = col_double(),
+                         race = col_character(),
+                         zip = col_double()
+                       ))
+
+enrollment <- read_csv("enrollment_ex1.csv",
+                       skip = 1,
+                       col_names = c(
+                         "id",
+                         "age",
+                         "female",
+                         "cap",
+                         `01`,
+                         `02`,
+                         `03`,
+                         `04`,
+                         `05`,
+                         `06`,
+                         `07`,
+                         `08`,
+                         `09`,
+                         `10`,
+                         `11`,
+                         `12`,
+                         "race",
+                         "zip"),
+                       col_types = cols(
+                         id = col_double(),
+                         age = col_double(),
+                         female = col_double(),
+                         cap = col_double(),
+                         `01` = col_double(),
+                         `02` = col_double(),
+                         `03` = col_double(),
+                         `04` = col_double(),
+                         `05` = col_double(),
+                         `06` = col_double(),
+                         `07` = col_double(),
+                         `08` = col_double(),
+                         `09` = col_double(),
+                         `10` = col_double(),
+                         `11` = col_double(),
+                         `12` = col_double(),
                          race = col_character(),
                          zip = col_double()
                        ))
@@ -55,26 +116,31 @@ income_by_zip <- read_csv("income_by_zip_ex1.csv",
                             zip_code = col_double()
                           ))
 
-cohort <- enrollment %>% 
-  mutate(diab_program_months =
-           diab_program_ind1 +
-           diab_program_ind2 +
-           diab_program_ind3 +
-           diab_program_ind4 +
-           diab_program_ind5 +
-           diab_program_ind6 +
-           diab_program_ind7 +
-           diab_program_ind8 +
-           diab_program_ind9 +
-           diab_program_ind10 +
-           diab_program_ind11 +
-           diab_program_ind12) %>% 
-  filter(diab_program_months > 0)
-
 diabetes_claim_ids <- claims %>% 
   filter(visit_type == "OFF") %>% 
   filter(str_detect(principal_diagnosis_cleaned, "250")) %>% 
+  
   select(claim_id) %>% 
   unlist()
 
-# lower_SES <-
+enrollment_modified <- enrollment %>% 
+  gather(key = "month", value = "enrolled",
+         `01`,
+         `02`,
+         `03`,
+         `04`,
+         `05`,
+         `06`,
+         `07`,
+         `08`,
+         `09`,
+         `10`,
+         `11`,
+         `12`) %>% 
+  filter(enrolled != 0) %>% 
+  select(-enrolled) %>% 
+  mutate(month = month(month))
+
+lower_SES <- income_by_zip %>% 
+  summarize(median(med_income)) %>% 
+  unlist()
