@@ -4,6 +4,7 @@ library(readr)
 library(readxl)
 library(janitor)
 library(lubridate)
+library(moderndive)
 library(tidyverse)
 
 # Read claims data from csv file, renaming some columns as appropriate and
@@ -152,4 +153,11 @@ regression_variables <- individual_annual %>%
   mutate(race = if_else(race == "w", 0, 1)) %>% 
   select(id, total, lower_SES, age, female, race, months_enrolled)
 
-SES_vs_annual_costs <- lm(total ~ lower_SES + age + female + months_enrolled)
+# Create regression model
+
+SES_vs_annual_costs <- lm(total ~ lower_SES + age + female + race + months_enrolled,
+                          data = regression_variables)
+
+# Calculate regression values
+
+regression_table <- get_regression_table(SES_vs_annual_costs)
