@@ -44,7 +44,11 @@ claims <- read_csv("claims_ex1.csv",
                      id = col_double(),
                      cap = col_double()
                    )) %>%
-  mutate(claim_date = format(as.Date(claim_date, origin="1960-01-01"),"%Y-%m-%d"))
+  mutate(claim_date = format(as.Date(claim_date, origin="1960-01-01"),"%Y-%m-%d")) %>%
+  
+  # Eliminated duplicate claims
+  
+  distinct()
 
 # Read enrollment data from csv file and rename enrollment columns by month number
 
@@ -116,6 +120,11 @@ enrollment_modified <- enrollment %>%
          `11`,
          `12`) %>% 
   filter(enrolled != 0) %>% 
+  
+  # There appear to have been some errors in age entry, but there were fewer
+  # than 20 so I eliminated them
+  
+  filter(age < 122) %>% 
   select(-enrolled) %>% 
   mutate(month = as.numeric(month))
 
@@ -143,7 +152,14 @@ individual_annual <- claims %>%
   # distinct() %>% 
   group_by(id) %>% 
   summarize(total = sum(allowed_amount_cleaned)) %>% 
-  ungroup()
+  ungroup() %>% 
+  
+  # There were <1000 observations with total annual costs significantly higher
+  # than the others (in the millions). I observed that these outliers all had
+  # long strings of repeated 9's, which suggested that the cost was mis-entered.
+  # Thus, I filtered out any costs above 100,000
+  
+  filter(total < 100000)
 ```
 
 ```{r}
@@ -173,8 +189,8 @@ regression_variables <- individual_annual %>%
                            "asian" = "a")) %>% 
   mutate(black = if_else(race == "black", 1, 0),
          asian = if_else(race == "asian", 1, 0),
-         unknown = if_else(race == "unknown", 1, 0)) %>% 
-  select(id, total, lower_SES, age, female, black, asian, unknown, months_enrolled)
+         unknown = if_else(race == "unknown", 1, 0)) # %>% 
+  # select(total, lower_SES, age, female, black, asian, unknown, months_enrolled)
 ```
 
 ## Variable Statistics
@@ -227,18 +243,36 @@ Max: `r regression_variables %>% summarize(x = max(months_enrolled))`
 Black
 
 Mean: `r regression_variables %>% summarize(x = mean(black))`, 
-Standard Deviation: `r regression_variables %>% summarize(x = sd(minority))`, 
-Median: `r regression_variables %>% summarize(x = median(minority))`, 
-Min: `r regression_variables %>% summarize(x = min(minority))`, 
-Max: `r regression_variables %>% summarize(x = max(minority))`
+Standard Deviation: `r regression_variables %>% summarize(x = sd(black))`, 
+Median: `r regression_variables %>% summarize(x = median(black))`, 
+Min: `r regression_variables %>% summarize(x = min(black))`, 
+Max: `r regression_variables %>% summarize(x = max(black))`
+
+Asian
+
+Mean: `r regression_variables %>% summarize(x = mean(asian))`, 
+Standard Deviation: `r regression_variables %>% summarize(x = sd(asian))`, 
+Median: `r regression_variables %>% summarize(x = median(asian))`, 
+Min: `r regression_variables %>% summarize(x = min(asian))`, 
+Max: `r regression_variables %>% summarize(x = max(asian))`
+
+Unknown
+
+Mean: `r regression_variables %>% summarize(x = mean(unknown))`, 
+Standard Deviation: `r regression_variables %>% summarize(x = sd(unknown))`, 
+Median: `r regression_variables %>% summarize(x = median(unknown))`, 
+Min: `r regression_variables %>% summarize(x = min(unknown))`, 
+Max: `r regression_variables %>% summarize(x = max(unknown))`
 
 ## Regression Table
 
 ```{r regression_model}
 # Create regression model
 
-SES_vs_annual_costs <- lm(total ~ lower_SES + age + female + minority + months_enrolled,
+SES_vs_annual_costs <- lm(total ~ lower_SES + age + female + black + asian + unknown + months_enrolled,
                           data = regression_variables)
+
+summary(SES_vs_annual_costs)
 
 # Calculate regression values
 

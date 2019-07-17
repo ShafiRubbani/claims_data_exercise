@@ -157,7 +157,7 @@ regression_variables <- individual_annual %>%
   mutate(black = if_else(race == "black", 1, 0),
          asian = if_else(race == "asian", 1, 0),
          unknown = if_else(race == "unknown", 1, 0)) %>% 
-  select(id, total, lower_SES, age, female, race, black, asian, unknown, months_enrolled)
+  select(id, total, lower_SES, age, female, black, asian, unknown, months_enrolled)
 
 # Create regression model
 
