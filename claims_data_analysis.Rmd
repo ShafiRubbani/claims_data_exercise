@@ -189,8 +189,8 @@ regression_variables <- individual_annual %>%
                            "asian" = "a")) %>% 
   mutate(black = if_else(race == "black", 1, 0),
          asian = if_else(race == "asian", 1, 0),
-         unknown = if_else(race == "unknown", 1, 0)) # %>% 
-  # select(total, lower_SES, age, female, black, asian, unknown, months_enrolled)
+         unknown = if_else(race == "unknown", 1, 0)) %>% 
+  select(total, lower_SES, age, female, black, asian, unknown, months_enrolled)
 ```
 
 ## Variable Statistics
@@ -272,7 +272,7 @@ Max: `r regression_variables %>% summarize(x = max(unknown))`
 SES_vs_annual_costs <- lm(total ~ lower_SES + age + female + black + asian + unknown + months_enrolled,
                           data = regression_variables)
 
-summary(SES_vs_annual_costs)
+# summary(SES_vs_annual_costs)
 
 # Calculate regression values
 
