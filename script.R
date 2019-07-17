@@ -150,8 +150,14 @@ regression_variables <- individual_annual %>%
   select(id, total, age, female, race, zip, months_enrolled) %>% 
   left_join(income_by_zip, by = c("zip" = "zip_code")) %>% 
   mutate(lower_SES = if_else(med_income < median_income, 1, 0)) %>% 
-  mutate(race = if_else(race == "w", 0, 1)) %>% 
-  select(id, total, lower_SES, age, female, race, months_enrolled)
+  mutate(race = if_else(is.na(race), "unknown", race)) %>% 
+  mutate(race = fct_recode(race,"white" = "w", 
+                           "black" = "b", 
+                           "asian" = "a")) %>% 
+  mutate(black = if_else(race == "black", 1, 0),
+         asian = if_else(race == "asian", 1, 0),
+         unknown = if_else(race == "unknown", 1, 0)) %>% 
+  select(id, total, lower_SES, age, female, race, black, asian, unknown, months_enrolled)
 
 # Create regression model
 
